@@ -1,0 +1,302 @@
+
+#cargamos datos y almacenamos en un data frame
+```{r}
+library(readxl)
+variables <- read_excel("C:/Users/Paloma Menéndez/Desktop/CEU/5º/TFG/buena.xlsx")
+head(variables)
+#View(variables)
+```
+
+
+#exploracion inicial
+```{r}
+str(variables)
+```
+
+
+#CREACION DEL DATAFRAME DE RAW DATA Y ANALISIS ESTADISTICO DE LAS VARIABLES
+```{r}
+datos.sin.trans<- variables[, c(2,5,7,9,11,13,16,19,20)]
+head(datos.sin.trans)
+```
+
+```{r}
+library(fitdistrplus)
+#PIB
+descdist(data = datos.sin.trans$PIB, graph = FALSE)
+```
+```{r}
+2.778625-3
+```
+
+```{r}
+boxplot(datos.sin.trans$PIB, col = "light blue")
+```
+
+```{r}
+hist(datos.sin.trans$PIB, col = "light blue", main = )
+```
+
+
+```{r}
+#EURIBOR
+descdist(data = datos.sin.trans$EURIBOR, graph = FALSE)
+```
+```{r}
+1.617183-3
+```
+
+```{r}
+boxplot(datos.sin.trans$EURIBOR, col = "light blue")
+hist(datos.sin.trans$EURIBOR, col = "light blue", main = )
+```
+
+
+
+```{r}
+#EURUSD
+descdist(data = datos.sin.trans$EURUSD, graph = FALSE)
+```
+```{r}
+2.694869-3
+```
+
+```{r}
+boxplot(datos.sin.trans$EURUSD, col = "light blue")
+hist(datos.sin.trans$EURUSD, col = "light blue", main = )
+```
+
+```{r}
+#IPC
+descdist(data = datos.sin.trans$IPC, graph = FALSE)
+```
+```{r}
+1.986062 -3
+```
+
+```{r}
+boxplot(datos.sin.trans$IPC, col = "light blue")
+hist(datos.sin.trans$IPC, col = "light blue", main = )
+```
+
+```{r}
+#IPRI
+descdist(data = datos.sin.trans$IPI, graph = FALSE)
+```
+```{r}
+6.284668-3
+```
+
+```{r}
+boxplot(datos.sin.trans$IPI, col = "light blue")
+hist(datos.sin.trans$IPI, col = "light blue", main = )
+```
+
+
+```{r}
+#IBEX
+descdist(data = datos.sin.trans$IBEX, graph = FALSE)
+```
+```{r}
+4.093413-3
+```
+
+```{r}
+boxplot(datos.sin.trans$IBEX, col = "light blue")
+hist(datos.sin.trans$IBEX, col = "light blue", main = )
+```
+
+```{r}
+#DAX
+descdist(data = datos.sin.trans$DAX, graph = FALSE)
+```
+```{r}
+2.127561-3
+```
+
+```{r}
+boxplot(datos.sin.trans$DAX, col = "light blue")
+hist(datos.sin.trans$DAX, col = "light blue", main = )
+```
+
+```{r}
+#TASAPARO
+descdist(data = datos.sin.trans$TASAPARO, graph = FALSE)
+```
+```{r}
+2.095009-3
+```
+
+```{r}
+boxplot(datos.sin.trans$TASAPARO, col = "light blue")
+hist(datos.sin.trans$TASAPARO, col = "light blue", main = )
+```
+
+
+#CREACION DATA FRAME VARIABLES TRANSFORMADAS
+```{r}
+datos.trans<- variables[, c(3,6,8,10,12,15,18,21)]
+head(datos.trans)
+```
+
+```{r}
+#eliminamos NA del conjunto de datos
+datos.trans<- na.omit(variables[, c(3,6,8,10,12,15,18,21)])
+head(datos.trans)
+```
+
+#SELECCION DE VARIABLES PARA EL MODELO CON TODOS LOs DATOS TRANSFORMADOS 
+#1. best subset selection
+```{r}
+#BEST SUBSET SELECTION 
+#install.packages("leaps")
+library(leaps)
+best.subset4<- regsubsets(PIB.DIF~., datos.trans)
+best.subset4.summary <-summary(best.subset4)
+best.subset4.summary
+best.subset4.summary$adjr2
+```
+```{r}
+coef(best.subset4, 5)
+```
+
+
+```{r}
+par(mfrow = c(2, 2))
+plot(best.subset4.summary$rss , xlab = "Number of Variables",
+ylab = "RSS", type = "l")
+plot(best.subset4.summary$adjr2 , xlab = "Number of Variables",
+ylab = "Adjusted RSq", type = "l")
+```
+
+```{r}
+coef(best.subset4, 5)
+```
+#2. FORWARD
+```{r}
+#SELECCION DE VARIABLES PARA EL MODELO CON DATOS TRANSFORMADOS (INCLUIDO PIB)
+#FORWARD STEPWISE SELECTION
+forward4<- regsubsets(PIB.DIF~., datos.trans, method = "forward")
+forward4.summary <-summary(forward4)
+forward4.summary
+forward4.summary$adjr2
+```
+```{r}
+forward4.summary$rss
+```
+
+
+```{r}
+coef(forward4, 5)
+```
+#3. BACKWARD
+```{r}
+#BACKWARD STEPWISE SELECTION DATOS TRANSFORMADOS (INCLUIDO PIB)
+backward4<- regsubsets(PIB.DIF~., datos.trans, method = "backward")
+backward4.summary <-summary(backward4)
+backward4.summary
+backward4.summary$adjr2
+```
+#TASAS DE VARIACION
+```{r}
+#Creacion de dataset de la tasa de variacion de las variables:
+# Funcion para calcular tasa de variacion
+tasa_variacion <- function(x) {
+  diff(x) / x[-length(x)] * 100
+}
+
+# aplicamos funcion a todas las columnas del dataset
+tasa.variacion.datos <- apply(datos.sin.trans, 2, tasa_variacion)
+
+# convertimos resultado en un dataset
+tasa.variacion.datos <- data.frame(tasa.variacion.datos)
+
+# cambiamos los nombres a las columnas
+colnames(tasa.variacion.datos) <- paste0(colnames(datos.sin.trans), "_tasa_variacion")
+head(tasa.variacion.datos)
+```
+
+```{r}
+tasa.variacion.datos1<- tasa.variacion.datos[, c(1,2,3,4,5,6,7,8)]
+```
+
+
+```{r}
+sum(is.na(tasa.variacion.datos1))
+```
+#BEST SUBSET SELECTION
+```{r}
+library(leaps)
+best.subset3<-regsubsets(PIB_tasa_variacion~., tasa.variacion.datos1)
+best.subset3.summary <-summary(best.subset3)
+best.subset3.summary
+best.subset3.summary$adjr2
+```
+```{r}
+par(mfrow = c(2, 2))
+plot(best.subset3.summary$rss , xlab = "Number of Variables",
+ylab = "RSS", type = "l")
+plot(best.subset3.summary$adjr2 , xlab = "Number of Variables",
+ylab = "Adjusted RSq", type = "l")
+```
+
+```{r}
+coef(best.subset3,5)
+```
+#STEPWISE SELECTION
+#FORWARD
+```{r}
+forward3<- regsubsets(PIB_tasa_variacion~., tasa.variacion.datos1, method = "forward")
+forward3.summary <-summary(forward3)
+forward3.summary
+forward3.summary$adjr2
+```
+
+#BACKWARD
+```{r}
+backward3<- regsubsets(PIB_tasa_variacion~., tasa.variacion.datos1, method = "backward")
+backward3.summary <-summary(backward3)
+backward3.summary
+backward3.summary$adjr2
+```
+#MODELO LOGISTICO PARA PREDECIR CRECIEMIENTO DEL PIB
+```{r}
+#en primer lugar, tenemos que añadir a cada conjunto de datos una nueva columna (que estaba ya en los datos originales llamados "variables"), que contiene los valores 0, en caso de que el PIB suba, y 1 en caso de que el PIB baje))
+
+#a datos transformados
+datos.trans$PIB.VAR <- na.omit(variables$PIB.VAR)
+head(datos.trans)
+```
+
+```{r}
+library(dplyr)
+datos.trans<- datos.trans %>% mutate(PIB.TRANS = ifelse(PIB.VAR == 0, "down", "up"))#: Se utiliza la función mutate() de la librería dplyr para crear una nueva variable PIB.TRANS en el objeto datos.trans. Esta variable toma el valor "up" si la variable PIB.VAR es igual a 0, y "down" en caso contrario.
+datos.trans
+```
+
+
+```{r}
+glm.datos.trans.todos<- glm(PIB.VAR ~ EURIBOR.DIF + EURUSD.DIF + IPC.LOG + IPI.LOG + DIF.LOG.IBEX + DIF.LOG.DAX + DTASAPARO, data= datos.trans, family=binomial(link = "probit"))
+summary(glm.datos.trans.todos)
+```
+```{r}
+summary(glm.datos.trans.todos)$coef[,4] #Se extrae la cuarta columna de la tabla de coeficientes del resumen del modelo. Esta columna contiene los valores p asociados a los coeficientes del modelo, es decir los pvalores
+```
+```{r}
+glm.datos.trans.prob <- predict(glm.datos.trans.todos, type = "response")# Se utiliza la función predict() para obtener las probabilidades ajustadas predichas por el modelo de regresión logística. Se utiliza el argumento typ = "response" para obtener las probabilidades en lugar de los valores log-odds.
+glm.datos.trans.prob[1:10] #primeras 10 probabilidades predichas por el modelo.
+```
+
+
+```{r}
+glm.pred.datostrans <- rep("down", length(datos.trans$PIB.VAR)) # Se crea un vector de caracteres llamado glm.pred.datostrans con la longitud igual a la variable PIB.VAR en datos.trans. Todos los elementos del vector se inicializan con el valor "down".
+glm.pred.datostrans[glm.datos.trans.prob>.5]="up" # Se actualizan los elementos del vector glm.pred.datostrans a "up" en aquellos casos donde las probabilidades predichas por el modelo (glm.datos.trans.prob) sean mayores que 0.5.
+glm.pred.datostrans
+```
+```{r}
+table(glm.pred.datostrans, datos.trans$PIB.TRANS)#Se crea una tabla de contingencia que muestra la frecuencia conjunta entre las variables glm.pred.datostrans y direction$PIB.TRANS. Esto permite comparar las predicciones del modelo con las categorías reales de la variable PIB.TRANS.
+```
+
+```{r}
+mean (glm.pred.datostrans== datos.trans$PIB.TRANS) #Se calcula el porcentaje de aciertos del modelo al comparar las predicciones
+```
